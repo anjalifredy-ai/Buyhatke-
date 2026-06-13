@@ -1,219 +1,99 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
-// ── Platform config ──────────────────────────────────────────────────────────
+// ── Platform config ───────────────────────────────────────────────────────────
 const PLATFORMS = {
-  Amazon:   { color: "#FF9900", bg: "#1a1000", url: (q) => `https://www.amazon.in/s?k=${encodeURIComponent(q)}` },
-  Flipkart: { color: "#2874F0", bg: "#00082a", url: (q) => `https://www.flipkart.com/search?q=${encodeURIComponent(q)}` },
-  Meesho:   { color: "#F43397", bg: "#1a0010", url: (q) => `https://meesho.com/search?q=${encodeURIComponent(q)}` },
-  Snapdeal: { color: "#E40046", bg: "#1a0008", url: (q) => `https://www.snapdeal.com/search?keyword=${encodeURIComponent(q)}` },
-  Myntra:   { color: "#FF3F6C", bg: "#1a0010", url: (q) => `https://www.myntra.com/${encodeURIComponent(q)}` },
-  Shopsy:   { color: "#F54D9E", bg: "#1a0018", url: (q) => `https://www.shopsy.in/search?q=${encodeURIComponent(q)}` },
-  Croma:    { color: "#67AE3E", bg: "#091a06", url: (q) => `https://www.croma.com/searchB?q=${encodeURIComponent(q)}` },
+  Amazon:   { color: "#FF9900", bg: "#1a1000", emoji: "🛒", url: (q) => `https://www.amazon.in/s?k=${encodeURIComponent(q)}` },
+  Flipkart: { color: "#2874F0", bg: "#00082a", emoji: "📦", url: (q) => `https://www.flipkart.com/search?q=${encodeURIComponent(q)}` },
+  Meesho:   { color: "#F43397", bg: "#1a0010", emoji: "💜", url: (q) => `https://meesho.com/search?q=${encodeURIComponent(q)}` },
+  Myntra:   { color: "#FF3F6C", bg: "#1a0010", emoji: "👗", url: (q) => `https://www.myntra.com/${encodeURIComponent(q)}` },
+  Shopsy:   { color: "#F54D9E", bg: "#1a0018", emoji: "🛍️", url: (q) => `https://www.shopsy.in/search?q=${encodeURIComponent(q)}` },
+  Snapdeal: { color: "#E40046", bg: "#1a0008", emoji: "⚡", url: (q) => `https://www.snapdeal.com/search?keyword=${encodeURIComponent(q)}` },
+  Croma:    { color: "#67AE3E", bg: "#091a06", emoji: "💻", url: (q) => `https://www.croma.com/searchB?q=${encodeURIComponent(q)}` },
 };
 
-// ── Product Database ─────────────────────────────────────────────────────────
-const PRODUCTS = [
+const PLATFORM_NAMES = Object.keys(PLATFORMS);
+
+// ── Default Products ──────────────────────────────────────────────────────────
+const DEFAULT_PRODUCTS = [
   {
     id: 1, name: "Apple iPhone 15 128GB Black", emoji: "📱",
-    tags: ["iphone", "apple", "iphone 15", "mobile", "phone", "smartphone"],
+    tags: ["iphone", "apple", "mobile", "phone", "smartphone"],
     rating: "4.6", reviews: "21,430",
-    features: ["6.1\" Super Retina XDR OLED", "48MP Main Camera", "A16 Bionic Chip", "USB-C Charging", "Dynamic Island"],
+    features: ["6.1\" Super Retina XDR OLED", "48MP Main Camera", "A16 Bionic Chip", "USB-C Charging"],
     prices: [
-      { platform: "Amazon",   price: 69999, mrp: 79900, discount: 12, delivery: "Free", deliveryDays: "Tomorrow",  badge: "Best Seller" },
-      { platform: "Flipkart", price: 71999, mrp: 79900, discount: 10, delivery: "Free", deliveryDays: "2-3 days",  badge: "" },
-      { platform: "Croma",    price: 74999, mrp: 79900, discount: 6,  delivery: "Free", deliveryDays: "2-3 days",  badge: "" },
-      { platform: "Snapdeal", price: 68500, mrp: 79900, discount: 14, delivery: "₹99", deliveryDays: "4-5 days",  badge: "Deal" },
+      { platform: "Amazon",   price: 69999, mrp: 79900, discount: 12, delivery: "Free", deliveryDays: "Tomorrow",  badge: "Best Seller", storeUrl: "" },
+      { platform: "Flipkart", price: 71999, mrp: 79900, discount: 10, delivery: "Free", deliveryDays: "2-3 days",  badge: "",            storeUrl: "" },
+      { platform: "Croma",    price: 74999, mrp: 79900, discount: 6,  delivery: "Free", deliveryDays: "2-3 days",  badge: "",            storeUrl: "" },
     ],
   },
   {
-    id: 2, name: "Apple iPhone 15 Pro 256GB Titanium", emoji: "📱",
-    tags: ["iphone", "apple", "iphone 15 pro", "iphone pro", "mobile", "phone", "smartphone"],
-    rating: "4.7", reviews: "14,210",
-    features: ["6.1\" ProMotion 120Hz", "48MP Triple Camera System", "A17 Pro Chip", "Titanium Design", "Action Button"],
-    prices: [
-      { platform: "Amazon",   price: 119999, mrp: 134900, discount: 11, delivery: "Free", deliveryDays: "Tomorrow", badge: "Best Seller" },
-      { platform: "Flipkart", price: 122999, mrp: 134900, discount: 9,  delivery: "Free", deliveryDays: "2-3 days", badge: "" },
-      { platform: "Croma",    price: 124999, mrp: 134900, discount: 7,  delivery: "Free", deliveryDays: "3-4 days", badge: "" },
-    ],
-  },
-  {
-    id: 3, name: "Samsung Galaxy S24 Ultra 256GB", emoji: "📱",
-    tags: ["samsung", "galaxy", "s24", "s24 ultra", "mobile", "phone", "smartphone", "android"],
-    rating: "4.6", reviews: "18,900",
-    features: ["6.8\" Dynamic AMOLED 120Hz", "200MP Quad Camera", "Snapdragon 8 Gen 3", "S Pen Included", "5000mAh Battery"],
-    prices: [
-      { platform: "Amazon",   price: 109999, mrp: 129999, discount: 15, delivery: "Free", deliveryDays: "Tomorrow", badge: "Best Seller" },
-      { platform: "Flipkart", price: 112999, mrp: 129999, discount: 13, delivery: "Free", deliveryDays: "2-3 days", badge: "" },
-      { platform: "Croma",    price: 114999, mrp: 129999, discount: 11, delivery: "Free", deliveryDays: "2-3 days", badge: "" },
-      { platform: "Snapdeal", price: 107500, mrp: 129999, discount: 17, delivery: "₹99", deliveryDays: "5-6 days", badge: "" },
-    ],
-  },
-  {
-    id: 4, name: "OnePlus 12 256GB Flowy Emerald", emoji: "📱",
-    tags: ["oneplus", "oneplus 12", "mobile", "phone", "smartphone", "android"],
-    rating: "4.5", reviews: "9,870",
-    features: ["6.82\" LTPO AMOLED 120Hz", "50MP Hasselblad Triple Camera", "Snapdragon 8 Gen 3", "100W Fast Charging", "5400mAh Battery"],
-    prices: [
-      { platform: "Amazon",   price: 54999, mrp: 64999, discount: 15, delivery: "Free", deliveryDays: "Tomorrow", badge: "Best Seller" },
-      { platform: "Flipkart", price: 56999, mrp: 64999, discount: 12, delivery: "Free", deliveryDays: "2-3 days", badge: "" },
-      { platform: "Meesho",   price: 51000, mrp: 64999, discount: 22, delivery: "₹40", deliveryDays: "5-7 days", badge: "Trending" },
-    ],
-  },
-  {
-    id: 5, name: "Sony WH-1000XM5 Wireless Headphones", emoji: "🎧",
-    tags: ["sony", "headphones", "wh1000xm5", "xm5", "earphones", "audio", "noise cancelling", "wireless"],
+    id: 2, name: "Sony WH-1000XM5 Wireless Headphones", emoji: "🎧",
+    tags: ["sony", "headphones", "earphones", "audio", "wireless"],
     rating: "4.7", reviews: "32,100",
-    features: ["Industry Leading ANC", "30 Hours Battery", "Multipoint Connection", "Hi-Res Audio", "Speak-to-Chat"],
+    features: ["Industry Leading ANC", "30 Hours Battery", "Multipoint Connection", "Hi-Res Audio"],
     prices: [
-      { platform: "Amazon",   price: 24990, mrp: 34990, discount: 29, delivery: "Free", deliveryDays: "Tomorrow", badge: "Best Seller" },
-      { platform: "Flipkart", price: 25999, mrp: 34990, discount: 26, delivery: "Free", deliveryDays: "2-3 days", badge: "" },
-      { platform: "Croma",    price: 27990, mrp: 34990, discount: 20, delivery: "Free", deliveryDays: "2-3 days", badge: "" },
-      { platform: "Snapdeal", price: 23500, mrp: 34990, discount: 33, delivery: "₹99", deliveryDays: "5-6 days", badge: "Deal" },
+      { platform: "Amazon",   price: 24990, mrp: 34990, discount: 29, delivery: "Free", deliveryDays: "Tomorrow", badge: "Best Seller", storeUrl: "" },
+      { platform: "Flipkart", price: 25999, mrp: 34990, discount: 26, delivery: "Free", deliveryDays: "2-3 days", badge: "",            storeUrl: "" },
+      { platform: "Snapdeal", price: 23500, mrp: 34990, discount: 33, delivery: "₹99",  deliveryDays: "5-6 days", badge: "Deal",        storeUrl: "" },
     ],
   },
   {
-    id: 6, name: "boAt Rockerz 550 Wireless Headphones", emoji: "🎧",
-    tags: ["boat", "headphones", "rockerz", "earphones", "audio", "wireless", "bluetooth"],
-    rating: "4.2", reviews: "87,450",
-    features: ["20 Hours Playback", "40mm Drivers", "Foldable Design", "Padded Earcups", "Voice Assistant Support"],
-    prices: [
-      { platform: "Amazon",   price: 1299, mrp: 4990, discount: 74, delivery: "Free", deliveryDays: "Tomorrow", badge: "Best Seller" },
-      { platform: "Flipkart", price: 1399, mrp: 4990, discount: 72, delivery: "Free", deliveryDays: "2-3 days", badge: "" },
-      { platform: "Meesho",   price: 999,  mrp: 4990, discount: 80, delivery: "₹40", deliveryDays: "5-7 days", badge: "Trending" },
-      { platform: "Shopsy",   price: 1099, mrp: 4990, discount: 78, delivery: "₹40", deliveryDays: "4-6 days", badge: "" },
-    ],
-  },
-  {
-    id: 7, name: "Samsung 55\" 4K Smart TV Crystal UHD", emoji: "📺",
-    tags: ["samsung", "tv", "television", "smart tv", "55 inch", "4k", "led", "samsung tv"],
-    rating: "4.4", reviews: "15,670",
-    features: ["55\" Crystal 4K UHD", "PurColor Technology", "AirSlim Design", "Tizen Smart OS", "Alexa Built-in"],
-    prices: [
-      { platform: "Amazon",   price: 42990, mrp: 74900, discount: 43, delivery: "Free", deliveryDays: "2-3 days", badge: "Deal of Day" },
-      { platform: "Flipkart", price: 44990, mrp: 74900, discount: 40, delivery: "Free", deliveryDays: "3-4 days", badge: "" },
-      { platform: "Croma",    price: 46990, mrp: 74900, discount: 37, delivery: "Free", deliveryDays: "3-4 days", badge: "" },
-      { platform: "Snapdeal", price: 41500, mrp: 74900, discount: 45, delivery: "₹99", deliveryDays: "5-7 days", badge: "" },
-    ],
-  },
-  {
-    id: 8, name: "Nike Air Force 1 '07 White", emoji: "👟",
-    tags: ["nike", "shoes", "sneakers", "air force", "footwear", "sports"],
+    id: 3, name: "Nike Air Force 1 '07 White", emoji: "👟",
+    tags: ["nike", "shoes", "sneakers", "footwear", "sports"],
     rating: "4.5", reviews: "5,430",
-    features: ["Leather Upper", "Air-Sole Cushioning", "Rubber Outsole", "Iconic AF1 Design", "Available All Sizes"],
+    features: ["Leather Upper", "Air-Sole Cushioning", "Rubber Outsole", "Iconic AF1 Design"],
     prices: [
-      { platform: "Amazon",   price: 7495, mrp: 9295, discount: 19, delivery: "Free", deliveryDays: "Tomorrow",  badge: "" },
-      { platform: "Flipkart", price: 7695, mrp: 9295, discount: 17, delivery: "Free", deliveryDays: "2-3 days",  badge: "" },
-      { platform: "Myntra",   price: 6995, mrp: 9295, discount: 25, delivery: "Free", deliveryDays: "2-3 days",  badge: "Best Seller" },
-      { platform: "Meesho",   price: 6500, mrp: 9295, discount: 30, delivery: "₹40", deliveryDays: "5-7 days",  badge: "" },
+      { platform: "Amazon",   price: 7495, mrp: 9295, discount: 19, delivery: "Free", deliveryDays: "Tomorrow",  badge: "",            storeUrl: "" },
+      { platform: "Myntra",   price: 6995, mrp: 9295, discount: 25, delivery: "Free", deliveryDays: "2-3 days",  badge: "Best Seller", storeUrl: "" },
+      { platform: "Meesho",   price: 6500, mrp: 9295, discount: 30, delivery: "₹40",  deliveryDays: "5-7 days",  badge: "",            storeUrl: "" },
     ],
   },
   {
-    id: 9, name: "Levi's 511 Slim Fit Jeans Dark Blue", emoji: "👖",
-    tags: ["levi", "levis", "jeans", "denim", "pants", "clothing", "fashion"],
-    rating: "4.3", reviews: "12,890",
-    features: ["Slim Fit", "Stretch Denim", "5-Pocket Styling", "Sits Below Waist", "Machine Washable"],
+    id: 4, name: "Samsung 55\" 4K Smart TV Crystal UHD", emoji: "📺",
+    tags: ["samsung", "tv", "television", "smart tv", "4k"],
+    rating: "4.4", reviews: "15,670",
+    features: ["55\" Crystal 4K UHD", "PurColor Technology", "Tizen Smart OS", "Alexa Built-in"],
     prices: [
-      { platform: "Myntra",   price: 2099, mrp: 3999, discount: 47, delivery: "Free", deliveryDays: "2-3 days", badge: "Best Seller" },
-      { platform: "Amazon",   price: 2299, mrp: 3999, discount: 43, delivery: "Free", deliveryDays: "Tomorrow",  badge: "" },
-      { platform: "Flipkart", price: 2199, mrp: 3999, discount: 45, delivery: "Free", deliveryDays: "2-3 days",  badge: "" },
-      { platform: "Meesho",   price: 1799, mrp: 3999, discount: 55, delivery: "₹40", deliveryDays: "5-7 days",  badge: "Trending" },
+      { platform: "Amazon",   price: 42990, mrp: 74900, discount: 43, delivery: "Free", deliveryDays: "2-3 days", badge: "Deal of Day", storeUrl: "" },
+      { platform: "Flipkart", price: 44990, mrp: 74900, discount: 40, delivery: "Free", deliveryDays: "3-4 days", badge: "",            storeUrl: "" },
+      { platform: "Croma",    price: 46990, mrp: 74900, discount: 37, delivery: "Free", deliveryDays: "3-4 days", badge: "",            storeUrl: "" },
     ],
   },
   {
-    id: 10, name: "Apple MacBook Air M2 8GB 256GB", emoji: "💻",
-    tags: ["macbook", "apple", "laptop", "macbook air", "m2", "mac"],
+    id: 5, name: "Apple MacBook Air M2 8GB 256GB", emoji: "💻",
+    tags: ["macbook", "apple", "laptop", "m2", "mac"],
     rating: "4.8", reviews: "8,760",
-    features: ["M2 Chip 8-Core CPU", "13.6\" Liquid Retina", "18 Hours Battery", "MagSafe Charging", "1080p FaceTime Camera"],
+    features: ["M2 Chip 8-Core CPU", "13.6\" Liquid Retina", "18 Hours Battery", "MagSafe Charging"],
     prices: [
-      { platform: "Amazon",   price: 89990, mrp: 114900, discount: 22, delivery: "Free", deliveryDays: "Tomorrow", badge: "Best Seller" },
-      { platform: "Flipkart", price: 91990, mrp: 114900, discount: 20, delivery: "Free", deliveryDays: "2-3 days", badge: "" },
-      { platform: "Croma",    price: 94990, mrp: 114900, discount: 17, delivery: "Free", deliveryDays: "2-3 days", badge: "" },
-    ],
-  },
-  {
-    id: 11, name: "Dell Inspiron 15 Core i5 16GB 512GB SSD", emoji: "💻",
-    tags: ["dell", "laptop", "inspiron", "computer", "notebook"],
-    rating: "4.3", reviews: "6,540",
-    features: ["Intel Core i5-1235U", "15.6\" FHD 120Hz", "16GB DDR4 RAM", "512GB NVMe SSD", "Windows 11 Home"],
-    prices: [
-      { platform: "Amazon",   price: 54990, mrp: 74990, discount: 27, delivery: "Free", deliveryDays: "Tomorrow", badge: "Deal of Day" },
-      { platform: "Flipkart", price: 56990, mrp: 74990, discount: 24, delivery: "Free", deliveryDays: "2-3 days", badge: "" },
-      { platform: "Snapdeal", price: 52000, mrp: 74990, discount: 31, delivery: "₹99", deliveryDays: "5-6 days", badge: "" },
-    ],
-  },
-  {
-    id: 12, name: "Adidas Ultraboost 22 Running Shoes", emoji: "👟",
-    tags: ["adidas", "shoes", "ultraboost", "sneakers", "running", "footwear", "sports"],
-    rating: "4.4", reviews: "3,210",
-    features: ["Boost Midsole Cushioning", "Primeknit+ Upper", "Continental Rubber Outsole", "Linear Energy Push", "Reflective Details"],
-    prices: [
-      { platform: "Amazon",   price: 8999, mrp: 17999, discount: 50, delivery: "Free", deliveryDays: "Tomorrow", badge: "" },
-      { platform: "Myntra",   price: 8499, mrp: 17999, discount: 53, delivery: "Free", deliveryDays: "2-3 days", badge: "Best Seller" },
-      { platform: "Flipkart", price: 9199, mrp: 17999, discount: 49, delivery: "Free", deliveryDays: "2-3 days", badge: "" },
-      { platform: "Meesho",   price: 7999, mrp: 17999, discount: 56, delivery: "₹40", deliveryDays: "5-7 days", badge: "Trending" },
-    ],
-  },
-  {
-    id: 13, name: "Instant Pot Duo 7-in-1 Electric Pressure Cooker 6L", emoji: "🍲",
-    tags: ["instant pot", "pressure cooker", "cooker", "kitchen", "appliance"],
-    rating: "4.5", reviews: "24,300",
-    features: ["7-in-1 Multi Cooker", "6 Litre Capacity", "14 Smart Programs", "Delay Start Function", "Dishwasher Safe Parts"],
-    prices: [
-      { platform: "Amazon",   price: 6999, mrp: 12999, discount: 46, delivery: "Free", deliveryDays: "Tomorrow", badge: "Best Seller" },
-      { platform: "Flipkart", price: 7299, mrp: 12999, discount: 44, delivery: "Free", deliveryDays: "2-3 days", badge: "" },
-      { platform: "Snapdeal", price: 6500, mrp: 12999, discount: 50, delivery: "₹99", deliveryDays: "5-6 days", badge: "" },
-    ],
-  },
-  {
-    id: 14, name: "Noise ColorFit Pro 4 Smartwatch", emoji: "⌚",
-    tags: ["smartwatch", "watch", "noise", "fitness", "wearable", "colorfit"],
-    rating: "4.1", reviews: "43,200",
-    features: ["1.72\" TFT Display", "100+ Watch Faces", "SpO2 & Heart Rate", "7 Day Battery", "IP68 Water Resistant"],
-    prices: [
-      { platform: "Amazon",   price: 1799, mrp: 6999, discount: 74, delivery: "Free", deliveryDays: "Tomorrow", badge: "Best Seller" },
-      { platform: "Flipkart", price: 1899, mrp: 6999, discount: 73, delivery: "Free", deliveryDays: "2-3 days", badge: "" },
-      { platform: "Meesho",   price: 1499, mrp: 6999, discount: 79, delivery: "₹40", deliveryDays: "5-7 days", badge: "Trending" },
-      { platform: "Shopsy",   price: 1599, mrp: 6999, discount: 77, delivery: "₹40", deliveryDays: "4-6 days", badge: "" },
-    ],
-  },
-  {
-    id: 15, name: "Fire-Boltt Phoenix Pro Smartwatch", emoji: "⌚",
-    tags: ["smartwatch", "watch", "fire boltt", "fitness", "wearable"],
-    rating: "4.0", reviews: "29,870",
-    features: ["1.39\" AMOLED Display", "Always On Display", "Bluetooth Calling", "100+ Sports Modes", "7 Day Battery"],
-    prices: [
-      { platform: "Amazon",   price: 1299, mrp: 5999, discount: 78, delivery: "Free", deliveryDays: "Tomorrow", badge: "" },
-      { platform: "Flipkart", price: 1199, mrp: 5999, discount: 80, delivery: "Free", deliveryDays: "2-3 days", badge: "Best Seller" },
-      { platform: "Meesho",   price: 999,  mrp: 5999, discount: 83, delivery: "₹40", deliveryDays: "5-7 days", badge: "Trending" },
+      { platform: "Amazon",   price: 89990, mrp: 114900, discount: 22, delivery: "Free", deliveryDays: "Tomorrow", badge: "Best Seller", storeUrl: "" },
+      { platform: "Flipkart", price: 91990, mrp: 114900, discount: 20, delivery: "Free", deliveryDays: "2-3 days", badge: "",            storeUrl: "" },
+      { platform: "Croma",    price: 94990, mrp: 114900, discount: 17, delivery: "Free", deliveryDays: "2-3 days", badge: "",            storeUrl: "" },
     ],
   },
 ];
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 const rupee = (n) => "₹" + Number(n).toLocaleString("en-IN");
-
 const fakeGraph = (basePrice) => {
   const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  return months.map((m) => ({
-    month: m,
-    price: Math.round(basePrice * (0.88 + Math.random() * 0.25)),
-  }));
+  return months.map((m) => ({ month: m, price: Math.round(basePrice * (0.88 + Math.random() * 0.25)) }));
+};
+const loadProducts = () => {
+  try {
+    const saved = localStorage.getItem("dealradar_products");
+    return saved ? JSON.parse(saved) : DEFAULT_PRODUCTS;
+  } catch { return DEFAULT_PRODUCTS; }
+};
+const saveProducts = (products) => {
+  try { localStorage.setItem("dealradar_products", JSON.stringify(products)); } catch {}
 };
 
-const searchProducts = (q) => {
-  const query = q.toLowerCase().trim();
-  return PRODUCTS.filter((p) =>
-    p.tags.some((t) => t.includes(query) || query.includes(t)) ||
-    p.name.toLowerCase().includes(query)
-  );
-};
-
-// ── Auth Input style ──────────────────────────────────────────────────────────
+// ── Input Style ───────────────────────────────────────────────────────────────
 const inp = {
-  width: "100%", padding: "13px 15px", borderRadius: 10,
-  border: "1px solid #222", background: "#111", color: "#eee",
-  fontSize: 14, outline: "none", boxSizing: "border-box",
+  width: "100%", padding: "11px 13px", borderRadius: 9,
+  border: "1px solid #222", background: "#0d0d18", color: "#eee",
+  fontSize: 13, outline: "none", boxSizing: "border-box",
   fontFamily: "inherit", marginBottom: 10, display: "block",
 };
 
@@ -276,6 +156,199 @@ function Auth({ onAuth }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+//  ADMIN PANEL
+// ═══════════════════════════════════════════════════════════════════════════════
+function AdminPanel({ products, setProducts, onClose }) {
+  const [view, setView] = useState("list"); // list | add | edit
+  const [editProduct, setEditProduct] = useState(null);
+
+  const deleteProduct = (id) => {
+    if (!window.confirm("Delete karo?")) return;
+    const updated = products.filter((p) => p.id !== id);
+    setProducts(updated);
+    saveProducts(updated);
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#09090f", fontFamily: "'Segoe UI',sans-serif" }}>
+      {/* Admin Nav */}
+      <div style={{ background: "#0d0d18", borderBottom: "1px solid #1c1c2e", padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+        {view !== "list" ? (
+          <button onClick={() => { setView("list"); setEditProduct(null); }}
+            style={{ background: "none", border: "none", color: "#818cf8", fontSize: 22, cursor: "pointer", padding: 0 }}>‹</button>
+        ) : (
+          <button onClick={onClose}
+            style={{ background: "none", border: "none", color: "#818cf8", fontSize: 22, cursor: "pointer", padding: 0 }}>‹</button>
+        )}
+        <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#fff" }}>
+          {view === "list" ? "⚙️ Admin Panel" : view === "add" ? "➕ Product Add Karo" : "✏️ Product Edit Karo"}
+        </h2>
+        {view === "list" && (
+          <button onClick={() => setView("add")}
+            style={{ marginLeft: "auto", padding: "8px 16px", borderRadius: 9, border: "none", background: "#4f46e5", color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+            + Add Product
+          </button>
+        )}
+      </div>
+
+      <div style={{ padding: 16 }}>
+        {view === "list" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <p style={{ color: "#444", fontSize: 12, margin: "0 0 4px" }}>{products.length} products hain database mein</p>
+            {products.map((p) => (
+              <div key={p.id} style={{ background: "#111", borderRadius: 12, border: "1px solid #1c1c2e", padding: "12px 14px", display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 28 }}>{p.emoji}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 600, color: "#ddd", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</p>
+                  <p style={{ margin: 0, fontSize: 11, color: "#555" }}>{p.prices.length} platforms · {rupee(Math.min(...p.prices.map(x => x.price)))} se shuru</p>
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={() => { setEditProduct(p); setView("edit"); }}
+                    style={{ padding: "6px 12px", borderRadius: 7, border: "1px solid #4f46e5", background: "transparent", color: "#818cf8", fontSize: 12, cursor: "pointer" }}>Edit</button>
+                  <button onClick={() => deleteProduct(p.id)}
+                    style={{ padding: "6px 12px", borderRadius: 7, border: "1px solid #7f1d1d", background: "transparent", color: "#f87171", fontSize: 12, cursor: "pointer" }}>Del</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {(view === "add" || view === "edit") && (
+          <ProductForm
+            initial={editProduct}
+            onSave={(product) => {
+              let updated;
+              if (editProduct) {
+                updated = products.map((p) => p.id === product.id ? product : p);
+              } else {
+                updated = [...products, { ...product, id: Date.now() }];
+              }
+              setProducts(updated);
+              saveProducts(updated);
+              setView("list");
+              setEditProduct(null);
+            }}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Product Form (Add / Edit) ─────────────────────────────────────────────────
+function ProductForm({ initial, onSave }) {
+  const blank = { name: "", emoji: "📦", tags: "", rating: "4.0", reviews: "0", features: ["", "", ""], prices: [] };
+  const [form, setForm] = useState(initial || blank);
+  const [newPrice, setNewPrice] = useState({ platform: "Amazon", price: "", mrp: "", discount: "", delivery: "Free", deliveryDays: "Tomorrow", badge: "", storeUrl: "" });
+  const [err, setErr] = useState("");
+
+  const setField = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  const setFeature = (i, v) => {
+    const feats = [...(form.features || ["", "", ""])];
+    feats[i] = v;
+    setField("features", feats);
+  };
+
+  const addPrice = () => {
+    if (!newPrice.price || !newPrice.mrp) return setErr("Price aur MRP dalo");
+    const disc = Math.round((newPrice.mrp - newPrice.price) / newPrice.mrp * 100);
+    setForm((f) => ({ ...f, prices: [...(f.prices || []), { ...newPrice, price: Number(newPrice.price), mrp: Number(newPrice.mrp), discount: disc }] }));
+    setNewPrice({ platform: "Amazon", price: "", mrp: "", discount: "", delivery: "Free", deliveryDays: "Tomorrow", badge: "", storeUrl: "" });
+    setErr("");
+  };
+
+  const removePrice = (i) => setForm((f) => ({ ...f, prices: f.prices.filter((_, idx) => idx !== i) }));
+
+  const save = () => {
+    if (!form.name.trim()) return setErr("Product ka naam dalo");
+    if (!form.prices || form.prices.length === 0) return setErr("Kam se kam ek platform ka price dalo");
+    const tags = form.tags ? form.tags.split(",").map(t => t.trim().toLowerCase()).filter(Boolean) : form.name.toLowerCase().split(" ");
+    onSave({ ...form, tags, features: form.features.filter(Boolean) });
+  };
+
+  const sInp = { ...inp, marginBottom: 8 };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+      {/* Basic Info */}
+      <div style={{ background: "#111", borderRadius: 12, border: "1px solid #1c1c2e", padding: "14px", marginBottom: 12 }}>
+        <p style={{ margin: "0 0 10px", fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 700 }}>Basic Info</p>
+        <input style={sInp} placeholder="Product ka naam *" value={form.name} onChange={e => setField("name", e.target.value)} />
+        <input style={sInp} placeholder="Emoji (e.g. 📱)" value={form.emoji} onChange={e => setField("emoji", e.target.value)} />
+        <input style={sInp} placeholder="Tags (comma separated: iphone, apple, mobile)" value={form.tags} onChange={e => setField("tags", e.target.value)} />
+        <div style={{ display: "flex", gap: 8 }}>
+          <input style={{ ...sInp, flex: 1 }} placeholder="Rating (e.g. 4.5)" value={form.rating} onChange={e => setField("rating", e.target.value)} />
+          <input style={{ ...sInp, flex: 1 }} placeholder="Reviews (e.g. 5,230)" value={form.reviews} onChange={e => setField("reviews", e.target.value)} />
+        </div>
+      </div>
+
+      {/* Features */}
+      <div style={{ background: "#111", borderRadius: 12, border: "1px solid #1c1c2e", padding: "14px", marginBottom: 12 }}>
+        <p style={{ margin: "0 0 10px", fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 700 }}>Key Features</p>
+        {[0, 1, 2, 3].map((i) => (
+          <input key={i} style={sInp} placeholder={`Feature ${i + 1}`} value={(form.features || [])[i] || ""} onChange={e => setFeature(i, e.target.value)} />
+        ))}
+      </div>
+
+      {/* Add Platform Price */}
+      <div style={{ background: "#111", borderRadius: 12, border: "1px solid #1c1c2e", padding: "14px", marginBottom: 12 }}>
+        <p style={{ margin: "0 0 10px", fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 700 }}>Platform Prices</p>
+
+        {/* Existing prices */}
+        {(form.prices || []).map((px, i) => {
+          const pl = PLATFORMS[px.platform];
+          return (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, background: "#0d0d18", borderRadius: 8, padding: "8px 10px" }}>
+              <span style={{ color: pl?.color || "#fff", fontWeight: 700, fontSize: 12, minWidth: 60 }}>{px.platform}</span>
+              <span style={{ color: "#4ade80", fontWeight: 800, fontSize: 13 }}>{rupee(px.price)}</span>
+              <span style={{ color: "#444", fontSize: 11 }}>MRP {rupee(px.mrp)}</span>
+              <span style={{ color: "#f97316", fontSize: 11 }}>{px.discount}% off</span>
+              <button onClick={() => removePrice(i)} style={{ marginLeft: "auto", background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: 16 }}>×</button>
+            </div>
+          );
+        })}
+
+        {/* New price row */}
+        <div style={{ background: "#0d0d18", borderRadius: 10, padding: 12, border: "1px dashed #1c1c2e", marginTop: 4 }}>
+          <p style={{ margin: "0 0 8px", fontSize: 11, color: "#444" }}>Naya Platform Add Karo</p>
+          <select value={newPrice.platform} onChange={e => setNewPrice(p => ({ ...p, platform: e.target.value }))}
+            style={{ ...sInp, marginBottom: 8 }}>
+            {PLATFORM_NAMES.map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+          <div style={{ display: "flex", gap: 8 }}>
+            <input style={{ ...sInp, flex: 1 }} placeholder="Price ₹" type="number" value={newPrice.price} onChange={e => setNewPrice(p => ({ ...p, price: e.target.value }))} />
+            <input style={{ ...sInp, flex: 1 }} placeholder="MRP ₹" type="number" value={newPrice.mrp} onChange={e => setNewPrice(p => ({ ...p, mrp: e.target.value }))} />
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <select value={newPrice.delivery} onChange={e => setNewPrice(p => ({ ...p, delivery: e.target.value }))}
+              style={{ ...sInp, flex: 1 }}>
+              <option>Free</option><option>₹40</option><option>₹99</option>
+            </select>
+            <select value={newPrice.deliveryDays} onChange={e => setNewPrice(p => ({ ...p, deliveryDays: e.target.value }))}
+              style={{ ...sInp, flex: 1 }}>
+              <option>Today</option><option>Tomorrow</option><option>2-3 days</option><option>4-5 days</option><option>5-7 days</option>
+            </select>
+          </div>
+          <input style={sInp} placeholder="Visit Store URL (optional — seedha product link)" value={newPrice.storeUrl}
+            onChange={e => setNewPrice(p => ({ ...p, storeUrl: e.target.value }))} />
+          <input style={sInp} placeholder='Badge (e.g. "Best Seller", "Deal")' value={newPrice.badge}
+            onChange={e => setNewPrice(p => ({ ...p, badge: e.target.value }))} />
+          <button onClick={addPrice}
+            style={{ width: "100%", padding: "10px 0", borderRadius: 8, border: "none", background: "#1c1c2e", color: "#818cf8", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
+            + Platform Add Karo
+          </button>
+        </div>
+      </div>
+
+      {err && <p style={{ color: "#f87171", fontSize: 13, marginBottom: 8 }}>{err}</p>}
+      <button onClick={save}
+        style={{ width: "100%", padding: "13px 0", borderRadius: 10, border: "none", background: "linear-gradient(135deg,#4f46e5,#818cf8)", color: "#fff", fontWeight: 800, fontSize: 15, cursor: "pointer" }}>
+        💾 Save Karo
+      </button>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 //  SEARCH RESULTS
 // ═══════════════════════════════════════════════════════════════════════════════
 function SearchResults({ results, onSelect, query }) {
@@ -290,7 +363,7 @@ function SearchResults({ results, onSelect, query }) {
           const maxOff = Math.max(...p.prices.map((x) => x.discount));
           return (
             <div key={p.id} onClick={() => onSelect(p)}
-              style={{ background: "#111", borderRadius: 12, border: "1px solid #1c1c2e", padding: "14px", cursor: "pointer", display: "flex", gap: 14, transition: "border-color 0.15s" }}
+              style={{ background: "#111", borderRadius: 12, border: "1px solid #1c1c2e", padding: "14px", cursor: "pointer", display: "flex", gap: 14 }}
               onMouseEnter={(e) => e.currentTarget.style.borderColor = "#4f46e5"}
               onMouseLeave={(e) => e.currentTarget.style.borderColor = "#1c1c2e"}>
               <div style={{ width: 64, height: 64, background: "#1c1c2e", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, flexShrink: 0 }}>
@@ -310,7 +383,7 @@ function SearchResults({ results, onSelect, query }) {
                     const pl = PLATFORMS[px.platform];
                     return pl ? (
                       <span key={px.platform} style={{ background: pl.bg, color: pl.color, border: `1px solid ${pl.color}44`, borderRadius: 4, padding: "1px 6px", fontSize: 10, fontWeight: 700 }}>
-                        {px.platform}
+                        {pl.emoji} {px.platform}
                       </span>
                     ) : null;
                   })}
@@ -328,11 +401,17 @@ function SearchResults({ results, onSelect, query }) {
 // ═══════════════════════════════════════════════════════════════════════════════
 //  PRODUCT DETAIL
 // ═══════════════════════════════════════════════════════════════════════════════
-function ProductDetail({ product, query }) {
+function ProductDetail({ product }) {
   const [graphPlatform, setGraphPlatform] = useState(product.prices[0]?.platform);
   const graphData = fakeGraph(product.prices.find((p) => p.platform === graphPlatform)?.price || 10000);
   const minPrice = Math.min(...product.prices.map((p) => p.price));
   const sorted = [...product.prices].sort((a, b) => a.price - b.price);
+
+  const getStoreUrl = (px) => {
+    if (px.storeUrl && px.storeUrl.trim()) return px.storeUrl.trim();
+    const pl = PLATFORMS[px.platform];
+    return pl ? pl.url(product.name) : "#";
+  };
 
   return (
     <div style={{ paddingBottom: 40 }}>
@@ -366,18 +445,13 @@ function ProductDetail({ product, query }) {
             const isBest = px.price === minPrice;
             const savings = px.mrp - px.price;
             return (
-              <div key={px.platform} style={{
-                background: isBest ? "#0b1f0b" : "#111", borderRadius: 12,
-                border: isBest ? "1.5px solid #4ade80" : "1px solid #1c1c2e",
-                padding: "14px", display: "flex", alignItems: "center", gap: 12,
-              }}>
-                <div style={{ width: 24, height: 24, borderRadius: "50%", background: i === 0 ? "#4ade80" : "#1c1c2e",
-                  color: i === 0 ? "#000" : "#555", fontWeight: 900, fontSize: 12,
-                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <div key={i} style={{ background: isBest ? "#0b1f0b" : "#111", borderRadius: 12, border: isBest ? "1.5px solid #4ade80" : "1px solid #1c1c2e", padding: "14px", display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 26, height: 26, borderRadius: "50%", background: i === 0 ? "#4ade80" : "#1c1c2e", color: i === 0 ? "#000" : "#555", fontWeight: 900, fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   {i + 1}
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+                    <span style={{ fontSize: 14 }}>{pl.emoji}</span>
                     <span style={{ color: pl.color, fontWeight: 800, fontSize: 14 }}>{px.platform}</span>
                     {isBest && <span style={{ background: "#4ade80", color: "#000", padding: "1px 7px", borderRadius: 10, fontSize: 10, fontWeight: 900 }}>BEST PRICE</span>}
                     {px.badge && !isBest && <span style={{ background: "#4f46e522", color: "#818cf8", padding: "1px 7px", borderRadius: 10, fontSize: 10 }}>{px.badge}</span>}
@@ -392,14 +466,10 @@ function ProductDetail({ product, query }) {
                   {savings > 0 && <span style={{ fontSize: 11, color: "#f97316" }}>₹{savings.toLocaleString()} bachenge MRP se</span>}
                 </div>
                 <div style={{ textAlign: "right", flexShrink: 0 }}>
-                  <div style={{ marginBottom: 2 }}>
-                    <span style={{ fontSize: 18, fontWeight: 900, color: isBest ? "#4ade80" : "#fff" }}>{rupee(px.price)}</span>
-                  </div>
+                  <span style={{ fontSize: 18, fontWeight: 900, color: isBest ? "#4ade80" : "#fff", display: "block", marginBottom: 2 }}>{rupee(px.price)}</span>
                   <span style={{ fontSize: 11, color: "#444", textDecoration: "line-through", display: "block", marginBottom: 6 }}>{rupee(px.mrp)}</span>
-                  <button onClick={() => window.open(pl.url(product.name), "_blank")}
-                    style={{ padding: "7px 14px", borderRadius: 8, border: "none", cursor: "pointer",
-                      background: pl.color, color: px.platform === "Amazon" ? "#000" : "#fff",
-                      fontWeight: 800, fontSize: 12, whiteSpace: "nowrap" }}>
+                  <button onClick={() => window.open(getStoreUrl(px), "_blank")}
+                    style={{ padding: "7px 14px", borderRadius: 8, border: "none", cursor: "pointer", background: pl.color, color: px.platform === "Amazon" ? "#000" : "#fff", fontWeight: 800, fontSize: 12, whiteSpace: "nowrap" }}>
                     Visit Store →
                   </button>
                 </div>
@@ -429,10 +499,8 @@ function ProductDetail({ product, query }) {
           <ResponsiveContainer width="100%" height={160}>
             <LineChart data={graphData}>
               <XAxis dataKey="month" tick={{ fill: "#444", fontSize: 10 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: "#444", fontSize: 10 }} axisLine={false} tickLine={false} width={55}
-                tickFormatter={(v) => "₹" + (v / 1000).toFixed(0) + "k"} />
-              <Tooltip contentStyle={{ background: "#1c1c2e", border: "none", borderRadius: 8, color: "#eee", fontSize: 12 }}
-                formatter={(v) => [rupee(v), "Price"]} />
+              <YAxis tick={{ fill: "#444", fontSize: 10 }} axisLine={false} tickLine={false} width={55} tickFormatter={(v) => "₹" + (v / 1000).toFixed(0) + "k"} />
+              <Tooltip contentStyle={{ background: "#1c1c2e", border: "none", borderRadius: 8, color: "#eee", fontSize: 12 }} formatter={(v) => [rupee(v), "Price"]} />
               <Line type="monotone" dataKey="price" stroke={PLATFORMS[graphPlatform]?.color || "#818cf8"} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
@@ -451,11 +519,11 @@ function ProductDetail({ product, query }) {
         </div>
       </div>
 
-      {/* Key Features */}
+      {/* Features */}
       <div style={{ padding: "20px 14px 0" }}>
         <p style={{ margin: "0 0 10px", fontSize: 12, color: "#444", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>Key Features</p>
         <div style={{ background: "#111", borderRadius: 12, border: "1px solid #1c1c2e", padding: "12px 14px" }}>
-          {product.features.map((feat, i) => (
+          {(product.features || []).map((feat, i) => (
             <div key={i} style={{ display: "flex", gap: 8, padding: "7px 0", borderBottom: i < product.features.length - 1 ? "1px solid #1c1c2e" : "none" }}>
               <span style={{ color: "#4f46e5", fontSize: 12, marginTop: 1, flexShrink: 0 }}>▸</span>
               <span style={{ fontSize: 13, color: "#999" }}>{feat}</span>
@@ -471,14 +539,20 @@ function ProductDetail({ product, query }) {
 //  MAIN APP
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function App() {
-  const [user, setUser]       = useState(null);
-  const [inputVal, setInputVal] = useState("");
-  const [query, setQuery]     = useState("");
-  const [results, setResults] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [searched, setSearched] = useState(false);
+  const [user, setUser]           = useState(null);
+  const [products, setProducts]   = useState(loadProducts);
+  const [inputVal, setInputVal]   = useState("");
+  const [query, setQuery]         = useState("");
+  const [results, setResults]     = useState([]);
+  const [selected, setSelected]   = useState(null);
+  const [searched, setSearched]   = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
 
   if (!user) return <Auth onAuth={setUser} />;
+
+  if (showAdmin) return (
+    <AdminPanel products={products} setProducts={setProducts} onClose={() => setShowAdmin(false)} />
+  );
 
   const search = () => {
     const q = inputVal.trim();
@@ -486,10 +560,15 @@ export default function App() {
     setQuery(q);
     setSelected(null);
     setSearched(true);
-    setResults(searchProducts(q));
+    const ql = q.toLowerCase();
+    setResults(products.filter((p) =>
+      (p.tags || []).some((t) => t.includes(ql) || ql.includes(t)) ||
+      p.name.toLowerCase().includes(ql)
+    ));
   };
 
-  const TRENDING = ["iPhone 15", "boAt Headphones", "Nike Shoes", "Samsung TV", "Smartwatch", "Laptop"];
+  const PLATFORM_LIST = Object.entries(PLATFORMS).map(([name, v]) => ({ name, ...v, homeUrl: `https://www.${name.toLowerCase()}.in` }));
+  const TRENDING = ["iPhone", "Nike Shoes", "Headphones", "Samsung TV", "Laptop", "Smartwatch"];
 
   return (
     <div style={{ minHeight: "100vh", maxWidth: 500, margin: "0 auto", background: "#09090f", color: "#e5e5e5", fontFamily: "'Segoe UI',sans-serif" }}>
@@ -498,8 +577,7 @@ export default function App() {
       <div style={{ position: "sticky", top: 0, zIndex: 50, background: "#09090f", borderBottom: "1px solid #1c1c2e" }}>
         <div style={{ padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
           {selected ? (
-            <button onClick={() => setSelected(null)}
-              style={{ background: "none", border: "none", color: "#818cf8", cursor: "pointer", fontSize: 22, padding: "0 4px 0 0", lineHeight: 1 }}>‹</button>
+            <button onClick={() => setSelected(null)} style={{ background: "none", border: "none", color: "#818cf8", cursor: "pointer", fontSize: 22, padding: "0 4px 0 0", lineHeight: 1 }}>‹</button>
           ) : (
             <span style={{ fontSize: 20 }}>🔍</span>
           )}
@@ -507,43 +585,51 @@ export default function App() {
             <input value={inputVal} onChange={(e) => setInputVal(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && search()}
               placeholder="Search — iPhone, Nike, Samsung TV..."
-              style={{ flex: 1, padding: "10px 14px", borderRadius: 9, border: "1px solid #1c1c2e",
-                background: "#111", color: "#eee", fontSize: 13, outline: "none", fontFamily: "inherit" }} />
-            <button onClick={search}
-              style={{ padding: "10px 16px", borderRadius: 9, border: "none", cursor: "pointer",
-                background: "#4f46e5", color: "#fff", fontWeight: 700, fontSize: 13 }}>
+              style={{ flex: 1, padding: "10px 14px", borderRadius: 9, border: "1px solid #1c1c2e", background: "#111", color: "#eee", fontSize: 13, outline: "none", fontFamily: "inherit" }} />
+            <button onClick={search} style={{ padding: "10px 16px", borderRadius: 9, border: "none", cursor: "pointer", background: "#4f46e5", color: "#fff", fontWeight: 700, fontSize: 13 }}>
               Search
             </button>
           </div>
-          <div onClick={() => setUser(null)} title="Logout"
-            style={{ width: 32, height: 32, borderRadius: "50%", background: "#4f46e5",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontWeight: 900, fontSize: 13, color: "#fff", cursor: "pointer", flexShrink: 0 }}>
-            {user.name[0].toUpperCase()}
+          {/* User + Admin */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <button onClick={() => setShowAdmin(true)} title="Admin Panel"
+              style={{ background: "#1c1c2e", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              ⚙️
+            </button>
+            <div onClick={() => setUser(null)} title="Logout"
+              style={{ width: 32, height: 32, borderRadius: "50%", background: "#4f46e5", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 13, color: "#fff", cursor: "pointer" }}>
+              {user.name[0].toUpperCase()}
+            </div>
           </div>
         </div>
-
         {selected && (
           <div style={{ padding: "4px 14px 10px", display: "flex", gap: 4, alignItems: "center" }}>
             <span style={{ color: "#444", fontSize: 12, cursor: "pointer" }} onClick={() => setSelected(null)}>Results</span>
             <span style={{ color: "#333", fontSize: 12 }}>›</span>
-            <span style={{ color: "#818cf8", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 260 }}>
-              {selected.name}
-            </span>
+            <span style={{ color: "#818cf8", fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 260 }}>{selected.name}</span>
           </div>
         )}
       </div>
 
       {/* LANDING */}
       {!searched && !selected && (
-        <div style={{ textAlign: "center", padding: "60px 20px 0" }}>
-          <div style={{ fontSize: 52, marginBottom: 14 }}>🛒</div>
-          <h2 style={{ color: "#fff", fontSize: 18, margin: "0 0 6px", fontWeight: 800 }}>Kya dhundhna hai?</h2>
-          <p style={{ color: "#333", fontSize: 13, marginBottom: 24 }}>Amazon, Flipkart, Meesho — sabka price ek jagah</p>
-          <p style={{ color: "#444", fontSize: 11, marginBottom: 10, textTransform: "uppercase", letterSpacing: 1 }}>Trending Searches</p>
-          <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+        <div style={{ padding: "24px 14px 0" }}>
+          <p style={{ color: "#444", fontSize: 11, marginBottom: 14, textTransform: "uppercase", letterSpacing: 1, textAlign: "center" }}>Seedha Platform Pe Jao</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 28 }}>
+            {Object.entries(PLATFORMS).map(([name, pl]) => (
+              <div key={name} onClick={() => window.open(`https://www.${name.toLowerCase()}.in`, "_blank")}
+                style={{ background: pl.bg, border: `1px solid ${pl.color}33`, borderRadius: 14, padding: "14px 8px", textAlign: "center", cursor: "pointer", transition: "transform 0.15s", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = `0 4px 20px ${pl.color}44`; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "none"; }}>
+                <div style={{ fontSize: 26 }}>{pl.emoji}</div>
+                <span style={{ color: pl.color, fontWeight: 800, fontSize: 11 }}>{name}</span>
+              </div>
+            ))}
+          </div>
+          <p style={{ color: "#444", fontSize: 11, marginBottom: 10, textTransform: "uppercase", letterSpacing: 1, textAlign: "center" }}>Trending Searches</p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
             {TRENDING.map((s) => (
-              <button key={s} onClick={() => { setInputVal(s); }}
+              <button key={s} onClick={() => setInputVal(s)}
                 style={{ padding: "8px 14px", borderRadius: 20, border: "1px solid #1c1c2e", background: "#111", color: "#666", cursor: "pointer", fontSize: 12 }}>
                 {s}
               </button>
@@ -557,23 +643,17 @@ export default function App() {
         <div style={{ textAlign: "center", padding: "60px 20px" }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>😕</div>
           <p style={{ color: "#555", fontSize: 14 }}>"{query}" ke liye koi product nahi mila</p>
-          <p style={{ color: "#333", fontSize: 12, marginTop: 6 }}>iPhone, Nike, Samsung TV, boAt, Laptop try karo</p>
+          <p style={{ color: "#333", fontSize: 12, marginTop: 6 }}>Admin panel (⚙️) se product add karo!</p>
         </div>
       )}
 
       {/* RESULTS */}
-      {!selected && results.length > 0 && (
-        <SearchResults results={results} onSelect={setSelected} query={query} />
-      )}
+      {!selected && results.length > 0 && <SearchResults results={results} onSelect={setSelected} query={query} />}
 
       {/* DETAIL */}
-      {selected && <ProductDetail product={selected} query={query} />}
+      {selected && <ProductDetail product={selected} />}
 
-      <style>{`
-        * { box-sizing: border-box; }
-        input { font-family: 'Segoe UI', sans-serif; }
-        ::-webkit-scrollbar { display: none; }
-      `}</style>
+      <style>{`* { box-sizing: border-box; } input, select { font-family: 'Segoe UI', sans-serif; } ::-webkit-scrollbar { display: none; } select { appearance: none; }`}</style>
     </div>
   );
 }
