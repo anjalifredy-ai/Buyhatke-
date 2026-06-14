@@ -12,6 +12,14 @@ const PLATFORMS = [
   { name: "Ajio",     emoji: "👔", color: "#FF6A00", bg: "#1a0a00", border: "#FF6A0044", url: (q) => `https://www.ajio.com/search/?text=${encodeURIComponent(q)}`,       home: "https://www.ajio.com" },
 ];
 
+// ── Mini Apps ────────────────────────────────────────────────────────────────
+const MINI_APPS = [
+  { id: "shop",    label: "DealRadar", emoji: "🔍", color: "#4f46e5", bg: "#0d0b1e", type: "internal" },
+  { id: "emi",     label: "EMI",       emoji: "💳", color: "#00b386", bg: "#001a12", type: "iframe",   url: "https://www.bajajfinserv.in/emi-store" },
+  { id: "travel",  label: "Travel",    emoji: "✈️", color: "#FF6B35", bg: "#1a0d00", type: "browser",  url: "https://www.ixigo.com" },
+  { id: "grocery", label: "Grocery",   emoji: "🛒", color: "#FFD700", bg: "#1a1600", type: "browser",  url: "https://blinkit.com" },
+];
+
 const TRENDING = [
   "iPhone 15", "Samsung Galaxy S24", "Nike Air Force 1",
   "boAt Earbuds", "MacBook Air M2", "Sony Headphones",
@@ -198,6 +206,7 @@ export default function App() {
   const [inputVal, setInputVal] = useState("");
   const [query, setQuery]       = useState("");
   const [searched, setSearched] = useState(false);
+  const [activeApp, setActiveApp] = useState("shop");
 
   if (!user) return <Auth onAuth={setUser} />;
 
@@ -210,8 +219,34 @@ export default function App() {
 
   const reset = () => { setSearched(false); setQuery(""); setInputVal(""); };
 
+  const switchApp = (app) => {
+    if (app.type === "browser") {
+      window.open(app.url, "_blank");
+      return;
+    }
+    setActiveApp(app.id);
+    if (app.id !== "shop") { setSearched(false); setInputVal(""); setQuery(""); }
+  };
+
+  // EMI iframe view
+  if (activeApp === "emi") {
+    return (
+      <div style={{ maxWidth: 480, margin: "0 auto", background: "#09090f", fontFamily: "'Segoe UI',sans-serif", display: "flex", flexDirection: "column", height: "100vh" }}>
+        <div style={{ background: "#0d0d18", padding: "12px 16px", borderBottom: "1px solid #1c1c2e", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ color: "#00b386", fontWeight: 800, fontSize: 15 }}>💳 EMI Store</span>
+          <button onClick={() => window.open("https://www.bajajfinserv.in/emi-store", "_blank")}
+            style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: "#00b386", color: "#fff", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
+            Browser mein kholo ↗
+          </button>
+        </div>
+        <iframe src="https://www.bajajfinserv.in/emi-store" style={{ flex: 1, border: "none", width: "100%" }} title="EMI Store" />
+        <BottomBar activeApp={activeApp} switchApp={switchApp} />
+      </div>
+    );
+  }
+
   return (
-    <div style={{ minHeight: "100vh", maxWidth: 480, margin: "0 auto", background: "#09090f", color: "#e5e5e5", fontFamily: "'Segoe UI',sans-serif" }}>
+    <div style={{ minHeight: "100vh", maxWidth: 480, margin: "0 auto", background: "#09090f", color: "#e5e5e5", fontFamily: "'Segoe UI',sans-serif", paddingBottom: 70 }}>
 
       {/* ── STICKY NAV ── */}
       <div style={{ position: "sticky", top: 0, zIndex: 50, background: "#09090f", borderBottom: "1px solid #1c1c2e" }}>
@@ -308,11 +343,52 @@ export default function App() {
         </div>
       )}
 
+      {/* ── BOTTOM BAR ── */}
+      <BottomBar activeApp={activeApp} switchApp={switchApp} />
+
       <style>{`
         * { box-sizing: border-box; }
         input { font-family: 'Segoe UI', sans-serif; }
         ::-webkit-scrollbar { display: none; }
       `}</style>
+    </div>
+  );
+}
+
+// ── Bottom Bar Component ──────────────────────────────────────────────────────
+function BottomBar({ activeApp, switchApp }) {
+  return (
+    <div style={{
+      position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
+      width: "100%", maxWidth: 480,
+      background: "#0d0d18", borderTop: "1px solid #1c1c2e",
+      display: "flex", zIndex: 100, paddingBottom: "env(safe-area-inset-bottom)",
+    }}>
+      {MINI_APPS.map((app) => {
+        const isActive = activeApp === app.id;
+        return (
+          <button key={app.id} onClick={() => switchApp(app)}
+            style={{
+              flex: 1, padding: "10px 4px 8px", border: "none", background: "transparent",
+              cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+              borderTop: isActive ? `2px solid ${app.color}` : "2px solid transparent",
+              transition: "all 0.15s",
+            }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: isActive ? app.bg : "transparent",
+              border: isActive ? `1px solid ${app.color}44` : "1px solid transparent",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 20, transition: "all 0.15s",
+            }}>
+              {app.emoji}
+            </div>
+            <span style={{ fontSize: 10, fontWeight: isActive ? 800 : 500, color: isActive ? app.color : "#444", fontFamily: "'Segoe UI',sans-serif" }}>
+              {app.label}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }
