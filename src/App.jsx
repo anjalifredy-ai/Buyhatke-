@@ -202,13 +202,18 @@ function SearchPage({ query }) {
 //  MAIN APP
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function App() {
-  const [user, setUser]         = useState(null);
+  const [user, setUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("dr_user")) || null; } catch { return null; }
+  });
   const [inputVal, setInputVal] = useState("");
   const [query, setQuery]       = useState("");
   const [searched, setSearched] = useState(false);
   const [activeApp, setActiveApp] = useState("shop");
 
-  if (!user) return <Auth onAuth={setUser} />;
+  if (!user) return <Auth onAuth={(u) => {
+    localStorage.setItem("dr_user", JSON.stringify(u));
+    setUser(u);
+  }} />;
 
   const search = () => {
     const q = inputVal.trim();
@@ -274,7 +279,7 @@ export default function App() {
           </div>
 
           {/* User avatar */}
-          <div onClick={() => setUser(null)} title="Logout"
+          <div onClick={() => { localStorage.removeItem("dr_user"); setUser(null); }} title="Logout"
             style={{ width: 32, height: 32, borderRadius: "50%", background: "#4f46e5", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 13, color: "#fff", cursor: "pointer", flexShrink: 0 }}>
             {user.name[0].toUpperCase()}
           </div>
